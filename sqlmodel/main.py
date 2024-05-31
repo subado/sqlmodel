@@ -428,6 +428,9 @@ class SQLModelMetaclass(ModelMetaclass, DeclarativeMeta):
         pydantic_annotations = {}
         relationship_annotations = {}
         for k, v in class_dict.items():
+            if isinstance(v, Magic):
+                v(cls, name, bases, class_dict, key=k, annotations=original_annotations, **kwargs)
+        for k, v in class_dict.items():
             if isinstance(v, RelationshipInfo):
                 relationships[k] = v
             else:
@@ -915,3 +918,17 @@ class SQLModel(BaseModel, metaclass=SQLModelMetaclass, registry=default_registry
                 f"is not a dict or SQLModel or Pydantic model: {obj}"
             )
         return self
+
+
+class Magic(SQLModel):
+    def __call__(
+        self,
+        cls: Type[_TSQLModel],
+        name: str,
+        bases: Tuple[Type[Any], ...],
+        class_dict: Dict[str, Any],
+        key: str,
+        annotations: Dict[str, Any],
+        **kwargs: Any,
+    ) -> Any:
+        return NotImplemented
